@@ -3,7 +3,7 @@
     "description": "Display 42 info on your Gnome toolbar",
     "original-author": "mlabouri@student.42.fr",
     "url": "https://github.com/millefeuille42/gnome-42-info",
-    "uuid": "gnome-42-info@millefeuille",
+    "uuid": "gnome-42-info@millefeuille42.fr",
     "shell-version": [
 	"40",
 	"41",

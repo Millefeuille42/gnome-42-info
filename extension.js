@@ -16,6 +16,9 @@ const secret = GLib.getenv("APP_SECRET")
 const url = "https://api.intra.42.fr/v2/oauth/token"
 const params = `?grant_type=client_credentials&client_id=${uid}&client_secret=${secret}`
 
+
+// Create and label element
+let label = new St.Label({ text: "", y_align: Clutter.ActorAlign.CENTER })
 let debounceTimeout = null;
 
 class Extension {
@@ -29,15 +32,14 @@ class Extension {
 		let token = _getToken();
 		let data = _reqData("/users/" + GLib.getenv("LOGNAME"), token.access_token, "GET")
 
-		// Create and add label element to the toolbar
-		let label = new St.Label({ text: data.location, y_align: Clutter.ActorAlign.CENTER })
+		label.text = data.location;
 		Main.panel._centerBox.add_child(label);
 	}
 
 	// REMINDER: It's required for extensions to clean up after themselves when
 	// they are disabled. This is required for approval during review!
 	disable() {
-		log(`disabling ${Me.metadata.name}`);
+		Main.panel._centerBox.remove_child(label);
 	}
 }
 
