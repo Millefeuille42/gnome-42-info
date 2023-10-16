@@ -1,50 +1,52 @@
+// Imports
 const St = imports.gi.St;
 const Gio = imports.gi.Gio;
 const Soup = imports.gi.Soup;
 const GLib = imports.gi.GLib ;
 const Clutter = imports.gi.Clutter
 const ExtensionUtils = imports.misc.extensionUtils;
-const Me = ExtensionUtils.getCurrentExtension();
 const Main = imports.ui.main;
 const Mainloop = imports.mainloop;
 const PanelMenu = imports.ui.panelMenu;
 
+// Constants
+const Me = ExtensionUtils.getCurrentExtension();
+const uid = GLib.getenv("APP_UID")
+const secret = GLib.getenv("APP_SECRET")
+const url = "https://api.intra.42.fr/v2/oauth/token"
+const params = `?grant_type=client_credentials&client_id=${uid}&client_secret=${secret}`
+
 let debounceTimeout = null;
 
 class Extension {
-    constructor() {
-    }
-    
-    enable() {
-        log(`enabling ${Me.metadata.name}`);
+	constructor() {}
 
-	let token = _getToken();
-	let data = _reqData("/users/" + GLib.getenv("LOGNAME"), token.access_token, "GET")
-	let label = new St.Label({ text: data.location, y_align: Clutter.ActorAlign.CENTER })
+	// This is called when extension is enabled
+	enable() {
+		log(`enabling ${Me.metadata.name}`);
 
-        Main.panel._centerBox.add_child(label);
-    }
-    
-    // REMINDER: It's required for extensions to clean up after themselves when
-    // they are disabled. This is required for approval during review!
-    disable() {
-        log(`disabling ${Me.metadata.name}`);
-    }
+		// Fetch user data
+		let token = _getToken();
+		let data = _reqData("/users/" + GLib.getenv("LOGNAME"), token.access_token, "GET")
+
+		// Create and add label element to the toolbar
+		let label = new St.Label({ text: data.location, y_align: Clutter.ActorAlign.CENTER })
+		Main.panel._centerBox.add_child(label);
+	}
+
+	// REMINDER: It's required for extensions to clean up after themselves when
+	// they are disabled. This is required for approval during review!
+	disable() {
+		log(`disabling ${Me.metadata.name}`);
+	}
 }
 
 function _getToken() {
-	const uid = GLib.getenv("APP_UID")
-	const secret = GLib.getenv("APP_SECRET")
-	
-	log(`uid: ${uid}`)
-	log(`secret: ${secret}`)
-
-	const url = "https://api.intra.42.fr/v2/oauth/token"
-	const params = `?grant_type=client_credentials&client_id=${uid}&client_secret=${secret}`
+	let out
 	let soupSyncSession = new Soup.SessionSync();
 	let message = Soup.Message.new("POST", url + params)
 	let responseCode = soupSyncSession.send_message(message)
-	let out
+
 	log (`Response code: ${responseCode}`)
 	if (responseCode == 200) {
 		try {
@@ -55,7 +57,7 @@ function _getToken() {
 			out = "Error"
 		}
 	}
-	log(`out is`)
+	log(`token out is`)
 	log(out)
 	return out
 }
@@ -63,6 +65,7 @@ function _getToken() {
 function _reqData(endpoint, token, method='GET') {
 	log("Token:" + token)
 	log("Endpoint" + endpoint)
+	
 	let soupSyncSession = new Soup.SessionSync();
 	let message = Soup.Message.new(method, 'https://api.intra.42.fr/v2' + endpoint)
 	message.request_headers.append(
@@ -70,6 +73,7 @@ function _reqData(endpoint, token, method='GET') {
 		`Bearer ${token}`
 	)
 	message.request_headers.set_content_type("application/json", null)
+	
 	let responseCode = soupSyncSession.send_message(message)
 	let out
 	log("Response")
@@ -86,7 +90,7 @@ function _reqData(endpoint, token, method='GET') {
 }
 
 function init() {
-    log(`initializing ${Me.metadata.name}`);
-    
-    return new Extension();
+	log(`initializing ${Me.metadata.name}`);
+
+	return new Extension();
 }
